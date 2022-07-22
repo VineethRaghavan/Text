@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Defining a container for you List Item-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="center_vertical"
+    android:padding="20dp">
+
+    <!-- Defining where should text be placed. You set you text color here-->
+    <TextView
+        android:id="@+id/group_name"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical" />
+</LinearLayout>
