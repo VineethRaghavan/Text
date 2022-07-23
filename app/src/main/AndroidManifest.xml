@@ -30,6 +30,13 @@
             android:launchMode="singleTask"
             android:label="Create Group"/>
         <activity
+            android:name=".activities.GroupActivity"
+            android:launchMode="singleTask"
+            android:label="Create Group"/>
+        <activity
+            android:name=".activities.GroupCodeActivity"
+            android:launchMode="singleTask"/>
+        <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="fullSensor"
             android:stateNotNeeded="true"

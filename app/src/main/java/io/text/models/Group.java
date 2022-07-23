@@ -4,7 +4,6 @@ public class Group {
 
     private String uid;
     private String name;
-    private boolean newMember;
     private int memberCount;
 
     public Group() {
@@ -14,7 +13,6 @@ public class Group {
     public Group(String uid, String name) {
         this.uid = uid;
         this.name = name;
-        this.newMember = false;
         this.memberCount = 1;
     }
 
@@ -24,10 +22,6 @@ public class Group {
 
     public String getName() {
         return name;
-    }
-
-    public boolean getNewMember() {
-        return newMember;
     }
 
     public int getMemberCount() {

@@ -5,7 +5,6 @@
     android:gravity="center_vertical"
     android:padding="20dp">
 
-    <!-- Defining where should text be placed. You set you text color here-->
     <TextView
         android:id="@+id/group_name"
         android:layout_width="fill_parent"

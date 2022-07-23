@@ -28,7 +28,6 @@ import io.text.BuildConfig;
 import io.text.R;
 import io.text.models.Group;
 import io.text.models.User;
-import io.text.utils.SecurityUtil;
 
 public class CreateGroupActivity extends AppCompatActivity {
 
@@ -70,12 +69,10 @@ public class CreateGroupActivity extends AppCompatActivity {
         } else {
             try {
                 QRCodeWriter writer = new QRCodeWriter();
-                SecurityUtil su = new SecurityUtil();
-                String public_key = su.getPublicKey();
                 String newGroupKey = mGroups.push().getKey();
                 Group newGroup = new Group(newGroupKey, idGroupName.getText().toString());
                 mGroups.child(newGroupKey).setValue(newGroup);
-                User user = new User(mFirebaseUser.getUid(), mFirebaseUser.getDisplayName(), public_key);
+                User user = new User(mFirebaseUser.getUid(), mFirebaseUser.getDisplayName());
                 mGroups.child(newGroupKey).child("members").child(mFirebaseUser.getUid()).setValue(user);
                 userGroups.child(newGroupKey).setValue(idGroupName.getText().toString());
                 BitMatrix bitMatrix = writer.encode(newGroupKey, BarcodeFormat.QR_CODE, 400, 400);
@@ -94,11 +91,10 @@ public class CreateGroupActivity extends AppCompatActivity {
                 roundedBitmapDrawable.setCornerRadius(roundPx);
                 idQrcode.setImageDrawable(roundedBitmapDrawable);
                 Toast.makeText(getBaseContext(), "Group created", Toast.LENGTH_SHORT).show();
+                idGroupName.setText("");
             } catch (WriterException e) {
                 Log.e(TAG, e.toString());
             }
         }
     }
-
-
 }

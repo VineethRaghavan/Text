@@ -10,7 +10,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -42,7 +41,6 @@ import java.util.List;
 import io.text.BuildConfig;
 import io.text.R;
 import io.text.models.User;
-import io.text.utils.SecurityUtil;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -146,12 +144,13 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "Error getting data", task2.getException());
                 }
             });
-            groupListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    String selectedItem = (String) parent.getItemAtPosition(position);
-
-                }
+            groupListView.setOnItemClickListener((parent, view, position, id) -> {
+                String name = (String) parent.getItemAtPosition(position);
+                String uid = loadedGroups.get(name);
+                Intent intent = new Intent(MainActivity.this, GroupActivity.class);
+                intent.putExtra("NAME", name);
+                intent.putExtra("UID", uid);
+                startActivity(intent);
             });
         }
     }
@@ -212,12 +211,8 @@ public class MainActivity extends AppCompatActivity {
                                     int count = Integer.parseInt(String.valueOf(task.getResult().child("memberCount").getValue()));
                                     userGroups.child(content).setValue(name);
                                     mGroups.child(content).child("memberCount").setValue(count + 1);
-                                    mGroups.child(content).child("newMember").setValue(true);
-                                    SecurityUtil su = new SecurityUtil();
-                                    String public_key = su.getPublicKey();
-                                    User user = new User(mFirebaseUser.getUid(), mFirebaseUser.getDisplayName(), public_key);
+                                    User user = new User(mFirebaseUser.getUid(), mFirebaseUser.getDisplayName());
                                     mGroups.child(content).child("members").child(mFirebaseUser.getUid()).setValue(user);
-                                    mGroups.child(content).child("newMember").setValue(true);
                                     Toast.makeText(getBaseContext(), intentResult.getContents(), Toast.LENGTH_SHORT).show();
                                 }
                             } else {

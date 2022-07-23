@@ -38,6 +38,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-bom:30.3.0'
     implementation 'com.google.firebase:firebase-auth:21.0.6'
     implementation 'com.firebaseui:firebase-ui-auth:7.2.0'
+    implementation 'com.firebaseui:firebase-ui-database:7.2.0'
     implementation 'com.journeyapps:zxing-android-embedded:4.1.0'
     implementation 'com.google.firebase:firebase-database:20.0.5'
     implementation 'com.google.firebase:firebase-messaging:23.0.6'

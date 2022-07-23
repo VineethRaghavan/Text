@@ -15,7 +15,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 
 import io.text.R;
-import io.text.utils.SecurityUtil;
 
 public class SignInActivity extends AppCompatActivity {
     private EditText name;
@@ -53,8 +52,6 @@ public class SignInActivity extends AppCompatActivity {
         user.updateProfile(profileUpdates)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        SecurityUtil su = new SecurityUtil();
-                        su.getKeyPair();
                         startActivity(new Intent(getBaseContext(), MainActivity.class));
                         finish();
                     }
