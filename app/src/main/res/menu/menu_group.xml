@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_code"
+        android:icon="@drawable/ic_baseline_qr_code_24"
+        android:title="@string/show_code"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/exit_group"
+        android:title="@string/exit_group"
+        app:showAsAction="never" />
+</menu>
