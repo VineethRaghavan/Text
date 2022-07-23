@@ -11,8 +11,7 @@
         android:layout_height="300dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="50dp"
-        android:background="@drawable/border"
-        android:contentDescription="qr_code" />
+        android:background="@drawable/border" />
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -32,17 +31,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:paddingVertical="15dp"
-            android:hint="Group name"
+            android:hint="@string/group_name"
             android:importantForAutofill="no"
-            android:inputType="textCapSentences" />
+            android:inputType="textCapSentences"
+            android:paddingVertical="15dp" />
 
         <Button
             android:id="@+id/idBtnGenerateQR"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingVertical="10dp"
-            android:text="Generate QR code" />
+            android:text="@string/generate_qr_code" />
     </LinearLayout>
 
 </RelativeLayout>
