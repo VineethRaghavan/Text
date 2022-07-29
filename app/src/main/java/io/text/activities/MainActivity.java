@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 
 import io.text.BuildConfig;
 import io.text.R;
@@ -56,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseUser mFirebaseUser;
     private DatabaseReference userGroups;
     private DatabaseReference mGroups;
-    private HashMap<String, String> loadedGroups;
+    private TreeMap<String, String> loadedGroups;
     private ArrayAdapter<String> groupArrayAdapter;
     private ArrayList<String> groupList;
 
@@ -92,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             mGroups = FirebaseDatabase.getInstance(BuildConfig.DB_URL).getReference().child("groups");
             userGroups = FirebaseDatabase.getInstance(BuildConfig.DB_URL).getReference().child("users").child(mFirebaseUser.getUid()).child("groups");
-            loadedGroups = new HashMap<>();
+            loadedGroups = new TreeMap<>();
             groupList = new ArrayList<>();
             groupArrayAdapter = new ArrayAdapter<>(MainActivity.this, R.layout.group_adapter_item, R.id.group_name, groupList);
             groupListView.setAdapter(groupArrayAdapter);
