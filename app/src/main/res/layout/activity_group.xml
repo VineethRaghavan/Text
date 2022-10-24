@@ -53,7 +53,8 @@
             android:paddingHorizontal="10dp"
             android:paddingVertical="15dp"
             android:textColor="@android:color/white"
-            android:textColorHint="#BBB" />
+            android:textColorHint="#BBB"
+            android:importantForAutofill="no" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/sendButton"
@@ -77,7 +78,6 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:text="@string/no_messages_found"
-        android:textColor="@android:color/white"
         android:textSize="24sp"
         android:visibility="gone" />
 </RelativeLayout>
