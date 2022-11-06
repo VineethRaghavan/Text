@@ -13,16 +13,18 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -31,8 +33,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import javax.crypto.spec.SecretKeySpec;
-
 import io.text.BuildConfig;
 import io.text.R;
 import io.text.models.Message;
@@ -40,8 +40,9 @@ import io.text.models.Message;
 public class GroupActivity extends AppCompatActivity {
     private static final String TAG = "ChatActivity";
     private static String uid;
-    private SecretKeySpec sks;
-    private FloatingActionButton mSendButton;
+    private Button mSendButton;
+    private Button mClearButton;
+    private LinearLayout contextContainer;
     private RecyclerView mMessageRecyclerView;
     private LinearLayoutManager mLinearLayoutManager;
     private EditText mMessageEditText;
@@ -51,10 +52,14 @@ public class GroupActivity extends AppCompatActivity {
     private DatabaseReference mGroupReference;
     private DatabaseReference userGroups;
     private DatabaseReference mMessageReference;
-    private FirebaseRecyclerAdapter<Message, RecyclerView.ViewHolder>
-            mFirebaseAdapter;
+    private FirebaseRecyclerAdapter<Message, RecyclerView.ViewHolder> mFirebaseAdapter;
     private String mUsername;
     private String name;
+    private Message message;
+    AlertDialog.Builder dialogbuilder;
+
+    TextView contextNameView;
+    TextView contextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,8 +78,14 @@ public class GroupActivity extends AppCompatActivity {
         mLinearLayoutManager.setStackFromEnd(true);
         mMessageRecyclerView.setLayoutManager(mLinearLayoutManager);
         mSendButton = findViewById(R.id.sendButton);
+        mClearButton = findViewById(R.id.clearButton);
+        contextNameView = findViewById(R.id.contextNameView);
+        contextView = findViewById(R.id.contextView);
         mNoMessages = findViewById(R.id.noMessages);
         mMessageEditText = findViewById(R.id.messageEditText);
+        contextContainer = findViewById(R.id.contextContainer);
+        contextNameView = findViewById(R.id.contextNameView);
+        contextView = findViewById(R.id.contextView);
         userGroups = FirebaseDatabase.getInstance(BuildConfig.DB_URL).getReference().child("users").child(mFirebaseUser.getUid()).child("groups");
         mGroupReference = FirebaseDatabase.getInstance(BuildConfig.DB_URL).getReference().child("groups").child(uid);
         mGroupReference.keepSynced(true);
@@ -170,13 +181,28 @@ public class GroupActivity extends AppCompatActivity {
 
         mSendButton.setOnClickListener(view -> {
             mNoMessages.setVisibility(TextView.GONE);
-            Message message = new
+            String contextViewString = contextView.getText().toString();
+            String contextNameViewString = contextNameView.getText().toString();
+            message = new
                     Message(mFirebaseUser.getUid(),
                     mUsername,
-                    mMessageEditText.getText().toString());
+                    mMessageEditText.getText().toString(),
+                    contextNameViewString.equals("") ? null: contextNameViewString,
+                    contextViewString.equals("") ? null: contextViewString);
+            contextNameView.setText("");
+            contextView.setText("");
             mGroupReference.child("messages").push().setValue(message);
             mMessageEditText.setText("");
+            if(contextContainer.getVisibility() == LinearLayout.VISIBLE)
+                contextContainer.setVisibility(LinearLayout.GONE);
         });
+
+        mClearButton.setOnClickListener(view -> {
+            contextContainer.setVisibility(LinearLayout.GONE);
+        });
+
+        dialogbuilder = new AlertDialog.Builder(this);
+
     }
 
     @Override
@@ -201,23 +227,37 @@ public class GroupActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.exit_group) {
-            mGroupReference.get().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    if (task.getResult().getValue() != null) {
-                        int count = Integer.parseInt(String.valueOf(task.getResult().child("memberCount").getValue()));
-                        if (count == 1) {
-                            mGroupReference.removeValue();
-                        } else {
-                            mGroupReference.child("memberCount").setValue(count - 1);
-                            mGroupReference.child("members").child(mFirebaseUser.getUid()).removeValue();
-                        }
-                        userGroups.child(uid).removeValue();
-                        finish();
-                    }
-                } else {
-                    Log.e(TAG, "Error getting data", task.getException());
-                }
-            });
+            dialogbuilder.setMessage("Are you sure you wish to exit this group?");
+            dialogbuilder.setCancelable(true);
+
+            dialogbuilder.setPositiveButton(
+                    "Yes",
+                    (dialog, id) -> {
+                        mGroupReference.get().addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                if (task.getResult().getValue() != null) {
+                                    int count = Integer.parseInt(String.valueOf(task.getResult().child("memberCount").getValue()));
+                                    if (count == 1) {
+                                        mGroupReference.removeValue();
+                                    } else {
+                                        mGroupReference.child("memberCount").setValue(count - 1);
+                                        mGroupReference.child("members").child(mFirebaseUser.getUid()).removeValue();
+                                    }
+                                    userGroups.child(uid).removeValue();
+                                    finish();
+                                }
+                            } else {
+                                Log.e(TAG, "Error getting data", task.getException());
+                            }
+                        });
+                        dialog.cancel();
+                    });
+
+            dialogbuilder.setNegativeButton(
+                    "No",
+                    (dialog, id) -> dialog.cancel());
+            AlertDialog alert = dialogbuilder.create();
+            alert.show();
             return true;
         } else if (item.getItemId() == R.id.action_code) {
             Intent intent = new Intent(GroupActivity.this, GroupCodeActivity.class);
@@ -229,24 +269,57 @@ public class GroupActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public class messageViewHolder extends RecyclerView.ViewHolder {
+    public class messageViewHolder extends RecyclerView.ViewHolder{
+        LinearLayout messageContainer;
         TextView nameTextView;
         TextView timeTextView;
         TextView messageTextView;
+        TextView messageContextName;
+        TextView messageContextText;
+        LinearLayout messageContextContainer;
+        View divider;
+        View divider1;
 
         messageViewHolder(View v) {
             super(v);
+            messageContainer = itemView.findViewById(R.id.messageContainer);
             nameTextView = itemView.findViewById(R.id.name);
             timeTextView = itemView.findViewById(R.id.time);
             messageTextView = itemView.findViewById(R.id.text);
+            messageContextName = itemView.findViewById(R.id.messageContextName);
+            messageContextText = itemView.findViewById(R.id.messageContextText);
+            messageContextContainer = itemView.findViewById(R.id.messageContextContainer);
+            divider = itemView.findViewById(R.id.divider);
+            divider1 = itemView.findViewById(R.id.divider1);
         }
 
         void bind(final Message message) {
             if (message.getText() != null) {
+                if(message.getContextText() != null) {
+                    messageContextContainer.setVisibility(LinearLayout.VISIBLE);
+                    messageContextName.setVisibility(TextView.VISIBLE);
+                    messageContextText.setVisibility(TextView.VISIBLE);
+                    divider.setVisibility(View.VISIBLE);
+                    divider1.setVisibility(View.VISIBLE);
+                    messageContextName.setText(message.getContextName());
+                    messageContextText.setText(message.getContextText());
+                } else {
+                    messageContextContainer.setVisibility(LinearLayout.GONE);
+                    messageContextName.setVisibility(TextView.GONE);
+                    messageContextText.setVisibility(TextView.GONE);
+                    divider.setVisibility(View.GONE);
+                    divider1.setVisibility(View.GONE);
+                }
                 nameTextView.setText(message.getName());
                 timeTextView.setText(DateFormat.format("dd MMM yyyy HH:mm", message.getTime()));
                 messageTextView.setText(message.getText());
                 messageTextView.setVisibility(TextView.VISIBLE);
+                messageContainer.setOnLongClickListener(v -> {
+                    contextContainer.setVisibility(LinearLayout.VISIBLE);
+                    contextNameView.setText(message.getName());
+                    contextView.setText(message.getText());
+                    return false;
+                });
                 Linkify.addLinks(messageTextView, Linkify.ALL);
             }
         }

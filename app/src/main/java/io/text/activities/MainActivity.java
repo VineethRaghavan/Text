@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.firebase.ui.auth.AuthUI;
@@ -35,7 +36,6 @@ import com.google.zxing.integration.android.IntentResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -60,11 +60,13 @@ public class MainActivity extends AppCompatActivity {
     private TreeMap<String, String> loadedGroups;
     private ArrayAdapter<String> groupArrayAdapter;
     private ArrayList<String> groupList;
+    AlertDialog.Builder dialogbuilder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        dialogbuilder = new AlertDialog.Builder(this);
         groupListView = findViewById(R.id.groupsList);
         noGroupsText = findViewById(R.id.noGroupsText);
         pd = findViewById(R.id.progressBar);
@@ -115,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onChildRemoved(DataSnapshot dataSnapshot) {
-                    loadedGroups.remove(dataSnapshot.getValue());
+                    loadedGroups.remove(dataSnapshot.getValue().toString());
                     groupList.clear();
                     groupList.addAll(loadedGroups.keySet());
                     groupArrayAdapter.notifyDataSetChanged();
@@ -175,8 +177,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.sign_out_menu) {
-            mFirebaseAuth.signOut();
-            finish();
+            dialogbuilder.setMessage("Are you sure you wish to sign out?");
+            dialogbuilder.setCancelable(true);
+
+            dialogbuilder.setPositiveButton(
+                    "Yes",
+                    (dialog, id) -> {
+                        mFirebaseAuth.signOut();
+                        dialog.cancel();
+                        finish();
+                    });
+
+            dialogbuilder.setNegativeButton(
+                    "No",
+                    (dialog, id) -> dialog.cancel());
+            AlertDialog alert = dialogbuilder.create();
+            alert.show();
             return true;
         } else if (item.getItemId() == R.id.action_scan) {
             IntentIntegrator intentIntegrator = new IntentIntegrator(this);

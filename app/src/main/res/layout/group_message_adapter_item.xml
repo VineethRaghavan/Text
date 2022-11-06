@@ -1,9 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?><!-- Defining a container for you List Item-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/messageContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingVertical="8dp">
+    android:paddingVertical="4dp">
+
+    <LinearLayout
+        android:id="@+id/messageContextContainer"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        >
+        <View
+            android:id="@+id/divider1"
+            android:layout_width="2dp"
+            android:layout_gravity="bottom"
+            android:layout_height="9.5dp"
+            android:foreground="@color/colorPrimary"
+            android:background="?android:attr/listDivider" />
+        <View
+            android:id="@+id/divider"
+            android:layout_width="40dp"
+            android:layout_gravity="center_vertical"
+            android:layout_height="2dp"
+            android:foreground="@color/colorPrimary"
+            android:background="?android:attr/listDivider" />
+
+        <TextView
+            android:id="@+id/messageContextName"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:paddingHorizontal="4dp"
+            android:textStyle="normal|bold"
+            android:background="@color/colorPrimary"/>
+
+        <TextView
+            android:id="@+id/messageContextText"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="12sp"
+            android:layout_marginStart="5dp"
+            android:textColor="#777"
+            />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
