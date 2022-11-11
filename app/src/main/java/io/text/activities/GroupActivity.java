@@ -1,6 +1,7 @@
 package io.text.activities;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -15,14 +16,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.firebase.auth.FirebaseAuth;
@@ -32,6 +39,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import io.text.BuildConfig;
 import io.text.R;
@@ -40,8 +50,12 @@ import io.text.models.Message;
 public class GroupActivity extends AppCompatActivity {
     private static final String TAG = "ChatActivity";
     private static String uid;
+    AlertDialog.Builder dialogbuilder;
+    TextView contextNameView;
+    TextView contextView;
     private Button mSendButton;
     private Button mClearButton;
+    private Button mImageButton;
     private LinearLayout contextContainer;
     private RecyclerView mMessageRecyclerView;
     private LinearLayoutManager mLinearLayoutManager;
@@ -52,14 +66,26 @@ public class GroupActivity extends AppCompatActivity {
     private DatabaseReference mGroupReference;
     private DatabaseReference userGroups;
     private DatabaseReference mMessageReference;
+    private FirebaseStorage mFirebaseStorage;
+    private StorageReference mImagesReference;
     private FirebaseRecyclerAdapter<Message, RecyclerView.ViewHolder> mFirebaseAdapter;
     private String mUsername;
     private String name;
     private Message message;
-    AlertDialog.Builder dialogbuilder;
-
-    TextView contextNameView;
-    TextView contextView;
+    ActivityResultLauncher<PickVisualMediaRequest> pickMedia =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), imageUri -> {
+                // Callback is invoked after the user selects a media item or closes the
+                // photo picker.
+                if (imageUri != null) {
+                    Log.d("PhotoPicker", "Selected URI: " + imageUri);
+                    //get the reference to stored file at database
+                    putFile(imageUri);
+                } else {
+                    Log.d("PhotoPicker", "No media selected");
+                }
+            });
+    private String contextViewString;
+    private String contextNameViewString;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +105,7 @@ public class GroupActivity extends AppCompatActivity {
         mMessageRecyclerView.setLayoutManager(mLinearLayoutManager);
         mSendButton = findViewById(R.id.sendButton);
         mClearButton = findViewById(R.id.clearButton);
+        mImageButton = findViewById(R.id.imageButton);
         contextNameView = findViewById(R.id.contextNameView);
         contextView = findViewById(R.id.contextView);
         mNoMessages = findViewById(R.id.noMessages);
@@ -91,6 +118,9 @@ public class GroupActivity extends AppCompatActivity {
         mGroupReference.keepSynced(true);
         mMessageReference = mGroupReference.child("messages");
         mMessageReference.keepSynced(true);
+
+        mFirebaseStorage = FirebaseStorage.getInstance();
+        mImagesReference = mFirebaseStorage.getReference().child("images");
 
         mMessageReference.addChildEventListener(new ChildEventListener() {
             @Override
@@ -181,24 +211,32 @@ public class GroupActivity extends AppCompatActivity {
 
         mSendButton.setOnClickListener(view -> {
             mNoMessages.setVisibility(TextView.GONE);
-            String contextViewString = contextView.getText().toString();
-            String contextNameViewString = contextNameView.getText().toString();
+            contextViewString = contextView.getText().toString();
+            contextNameViewString = contextNameView.getText().toString();
+
             message = new
                     Message(mFirebaseUser.getUid(),
                     mUsername,
                     mMessageEditText.getText().toString(),
-                    contextNameViewString.equals("") ? null: contextNameViewString,
-                    contextViewString.equals("") ? null: contextViewString);
+                    contextNameViewString.equals("") ? null : contextNameViewString,
+                    contextViewString.equals("") ? null : contextViewString,
+                    null);
             contextNameView.setText("");
             contextView.setText("");
             mGroupReference.child("messages").push().setValue(message);
             mMessageEditText.setText("");
-            if(contextContainer.getVisibility() == LinearLayout.VISIBLE)
+            if (contextContainer.getVisibility() == LinearLayout.VISIBLE)
                 contextContainer.setVisibility(LinearLayout.GONE);
         });
 
         mClearButton.setOnClickListener(view -> {
             contextContainer.setVisibility(LinearLayout.GONE);
+        });
+
+        mImageButton.setOnClickListener(view -> {
+            pickMedia.launch(new PickVisualMediaRequest.Builder()
+                    .setMediaType((PickVisualMedia.VisualMediaType) PickVisualMedia.ImageOnly.INSTANCE)
+                    .build());
         });
 
         dialogbuilder = new AlertDialog.Builder(this);
@@ -238,6 +276,20 @@ public class GroupActivity extends AppCompatActivity {
                                 if (task.getResult().getValue() != null) {
                                     int count = Integer.parseInt(String.valueOf(task.getResult().child("memberCount").getValue()));
                                     if (count == 1) {
+                                        mImagesReference.child(uid).listAll()
+                                                .addOnSuccessListener(listResult -> {
+                                                    for (StorageReference item1 : listResult.getItems()) {
+                                                        StorageReference desertRef = mFirebaseStorage.getReference().child(item1.getPath());
+                                                        desertRef.delete().addOnSuccessListener(aVoid -> {
+                                                            //Success
+                                                        }).addOnFailureListener(exception -> {
+                                                            Log.e(TAG, exception.getMessage());
+                                                        });
+                                                    }
+                                                })
+                                                .addOnFailureListener(e -> {
+                                                    Log.e(TAG, e.getMessage());
+                                                });
                                         mGroupReference.removeValue();
                                     } else {
                                         mGroupReference.child("memberCount").setValue(count - 1);
@@ -269,13 +321,45 @@ public class GroupActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public class messageViewHolder extends RecyclerView.ViewHolder{
+    public void putFile(Uri imageUri) {
+        String caption = mMessageEditText.getText().toString().equals("") ? "Image" : mMessageEditText.getText().toString();
+        mMessageEditText.setText("");
+        mMessageEditText.setHint("Uploading...");
+        StorageReference photoReference = mImagesReference.child(uid + "/" + imageUri.getLastPathSegment());
+        UploadTask uploadTask = photoReference.putFile(imageUri);
+
+        uploadTask.continueWithTask(task -> {
+            if (!task.isSuccessful()) {
+                Log.e(TAG, task.getException().getMessage());
+            }
+            return photoReference.getDownloadUrl();
+        }).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Uri downloadUrl = task.getResult();
+                message = new
+                        Message(mFirebaseUser.getUid(),
+                        mUsername,
+                        caption,
+                        contextNameView.getText().toString().equals("") ? null : contextNameView.getText().toString(),
+                        contextView.getText().toString().equals("") ? null : contextView.getText().toString(),
+                        downloadUrl.toString());
+                mGroupReference.child("messages").push().setValue(message);
+                mMessageEditText.setText("");
+                mMessageEditText.setHint("Message");
+            } else {
+                Log.e(TAG, task.getException().getMessage());
+            }
+        });
+    }
+
+    public class messageViewHolder extends RecyclerView.ViewHolder {
         LinearLayout messageContainer;
         TextView nameTextView;
         TextView timeTextView;
         TextView messageTextView;
         TextView messageContextName;
         TextView messageContextText;
+        ImageView imageView;
         LinearLayout messageContextContainer;
         View divider;
         View divider1;
@@ -286,6 +370,7 @@ public class GroupActivity extends AppCompatActivity {
             nameTextView = itemView.findViewById(R.id.name);
             timeTextView = itemView.findViewById(R.id.time);
             messageTextView = itemView.findViewById(R.id.text);
+            imageView = itemView.findViewById(R.id.imageView);
             messageContextName = itemView.findViewById(R.id.messageContextName);
             messageContextText = itemView.findViewById(R.id.messageContextText);
             messageContextContainer = itemView.findViewById(R.id.messageContextContainer);
@@ -295,7 +380,7 @@ public class GroupActivity extends AppCompatActivity {
 
         void bind(final Message message) {
             if (message.getText() != null) {
-                if(message.getContextText() != null) {
+                if (message.getContextText() != null) {
                     messageContextContainer.setVisibility(LinearLayout.VISIBLE);
                     messageContextName.setVisibility(TextView.VISIBLE);
                     messageContextText.setVisibility(TextView.VISIBLE);
@@ -312,8 +397,22 @@ public class GroupActivity extends AppCompatActivity {
                 }
                 nameTextView.setText(message.getName());
                 timeTextView.setText(DateFormat.format("dd MMM yyyy HH:mm", message.getTime()));
+                if (message.getImageUrl() != null) {
+                    if (message.getText().equals("Image"))
+                        messageTextView.setVisibility(View.GONE);
+                    else
+                        messageTextView.setVisibility(View.VISIBLE);
+                    imageView.setVisibility(View.VISIBLE);
+                    Glide.with(imageView.getContext())
+                            .load(message.getImageUrl())
+                            .override(400, 800)
+                            .fitCenter()
+                            .into(imageView);
+                } else {
+                    messageTextView.setVisibility(View.VISIBLE);
+                    imageView.setVisibility(View.GONE);
+                }
                 messageTextView.setText(message.getText());
-                messageTextView.setVisibility(TextView.VISIBLE);
                 messageContainer.setOnLongClickListener(v -> {
                     contextContainer.setVisibility(LinearLayout.VISIBLE);
                     contextNameView.setText(message.getName());

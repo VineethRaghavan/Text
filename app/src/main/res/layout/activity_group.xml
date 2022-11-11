@@ -86,6 +86,15 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
+            <Button
+                android:id="@+id/imageButton"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:backgroundTint="#222"
+                android:drawableBottom="@drawable/ic_baseline_add_24"
+                android:textColor="@android:color/white" />
+
             <EditText
                 android:id="@+id/messageEditText"
                 android:layout_width="0dp"
@@ -108,7 +117,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center_vertical"
                 android:backgroundTint="#222"
-                android:drawableLeft="@drawable/ic_baseline_keyboard_arrow_right_24"
+                android:drawableBottom="@drawable/ic_baseline_keyboard_arrow_right_24"
                 android:enabled="false"
                 android:textColor="@android:color/white" />
 

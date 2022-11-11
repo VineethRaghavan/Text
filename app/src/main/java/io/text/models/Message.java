@@ -9,19 +9,21 @@ public class Message {
     private String text;
     private String contextName;
     private String contextText;
+    private String imageUrl;
     private long time;
 
     public Message() {
         // Default constructor required for calls to DataSnapshot.getValue(Message.class)
     }
 
-    public Message(String uid, String name, String text, String contextName, String contextText ) {
+    public Message(String uid, String name, String text, String contextName, String contextText, String imageUrl) {
         this.uid = uid;
         this.name = name;
         this.text = text;
         this.time = new Date().getTime();
         this.contextName = contextName;
         this.contextText = contextText;
+        this.imageUrl = imageUrl;
     }
 
     public String getUid() {
@@ -39,6 +41,8 @@ public class Message {
     public String getText() {
         return text;
     }
+
+    public String getImageUrl() { return imageUrl; }
 
     public String getContextName() {
         return contextName;

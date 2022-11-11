@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     ListView groupListView;
     TextView noGroupsText;
     ProgressBar pd;
+    AlertDialog.Builder dialogbuilder;
     private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
     private DatabaseReference userGroups;
@@ -60,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
     private TreeMap<String, String> loadedGroups;
     private ArrayAdapter<String> groupArrayAdapter;
     private ArrayList<String> groupList;
-    AlertDialog.Builder dialogbuilder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
